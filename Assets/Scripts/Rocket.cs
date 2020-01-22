@@ -14,11 +14,12 @@ public class Rocket : MonoBehaviour
     [SerializeField] ParticleSystem mainEngineParticles, successParticles, deathParticles;
 
 
-    int startLevel = 0;
+    int startLevel = SceneManager.GetActiveScene().buildIndex;
     
 
     enum State { Alive, Dying, Transcending }
     State state = State.Alive;
+    bool isCollisionEnabled = true;
 
     void Start()
     {
@@ -36,12 +37,11 @@ public class Rocket : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        if (state != State.Alive)
+        if (state != State.Alive || !isCollisionEnabled)
             return;
         switch (collision.gameObject.tag)
         {
             case "Friendly":
-                print("friend");
                 break;
             case "Finish":
                 StartSuccessSequence();
@@ -77,8 +77,13 @@ public class Rocket : MonoBehaviour
 
     void LoadNextLevel()
     {
-        startLevel++;
+        if (startLevel < SceneManager.sceneCountInBuildSettings)
+            startLevel++;
+        else if (startLevel == SceneManager.sceneCountInBuildSettings)
+            startLevel = 0;
+
         SceneManager.LoadScene(startLevel);
+
     }
 
 
@@ -86,6 +91,8 @@ public class Rocket : MonoBehaviour
     {
         Thrust();
         Rotate();
+        if (Debug.isDebugBuild)
+            DebugKeys();
     }
 
     void Thrust()
@@ -123,5 +130,19 @@ public class Rocket : MonoBehaviour
         }
 
         rigidBody.freezeRotation = false;
+    }
+
+    void DebugKeys()
+
+    {
+        if(Input.GetKeyDown(KeyCode.L))
+        {
+            LoadNextLevel();
+        }
+            
+        if(Input.GetKeyDown(KeyCode.C))
+        {
+            isCollisionEnabled = !isCollisionEnabled;
+        }
     }
 }
