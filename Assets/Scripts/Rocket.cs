@@ -7,13 +7,15 @@ public class Rocket : MonoBehaviour
 {
     Rigidbody rigidBody;
     AudioSource audioSource;
-    [SerializeField]
-    float rcsThrust = 70f;
-    [SerializeField]
-    float mainThrust = 10f;
-    [SerializeField]
-    float loadTime = 3f;
+    [SerializeField] float rcsThrust = 70f;
+    [SerializeField] float mainThrust = 10f;
+    [SerializeField] float loadTime = 3f;
+    [SerializeField] AudioClip mainEngine, death, success;
+    [SerializeField] ParticleSystem mainEngineParticles, successParticles, deathParticles;
+
+
     int startLevel = 0;
+    
 
     enum State { Alive, Dying, Transcending }
     State state = State.Alive;
@@ -27,13 +29,9 @@ public class Rocket : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (state == State.Alive)
-        {
+        if(state == State.Alive)
             ProcessInput();
-
-        }
-        else
-            audioSource.Stop();
+       
     }
 
     void OnCollisionEnter(Collision collision)
@@ -46,14 +44,30 @@ public class Rocket : MonoBehaviour
                 print("friend");
                 break;
             case "Finish":
-                state = State.Transcending;
-                Invoke("LoadNextLevel", loadTime);
+                StartSuccessSequence();
                 break;
             default:
-                state = State.Dying;
-                Invoke("LoadFirstLevel", loadTime);
+                StartDeathSequence();
                 break;
         }
+    }
+
+    private void StartDeathSequence()
+    {
+        state = State.Dying;
+        audioSource.Stop();
+        audioSource.PlayOneShot(death);
+        deathParticles.Play();
+        Invoke("LoadFirstLevel", loadTime);
+    }
+
+    private void StartSuccessSequence()
+    {
+        state = State.Transcending;
+        audioSource.Stop();
+        audioSource.PlayOneShot(success);
+        successParticles.Play();
+        Invoke("LoadNextLevel", loadTime);
     }
 
     void LoadFirstLevel()
@@ -76,15 +90,21 @@ public class Rocket : MonoBehaviour
 
     void Thrust()
     {
-        
+
         if (Input.GetButton("Thrust"))
         {
-            rigidBody.AddRelativeForce(Vector3.up*mainThrust);
+            rigidBody.AddRelativeForce(Vector3.up * mainThrust*Time.deltaTime);
             if (!audioSource.isPlaying)
-                audioSource.Play();
+            {
+                audioSource.PlayOneShot(mainEngine);
+                mainEngineParticles.Play();
+            }
         }
         else
+        {
             audioSource.Stop();
+            mainEngineParticles.Stop();
+        }
     }
 
     void Rotate()
