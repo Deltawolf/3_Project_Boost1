@@ -14,7 +14,7 @@ public class Rocket : MonoBehaviour
     [SerializeField] ParticleSystem mainEngineParticles, successParticles, deathParticles;
 
 
-    int startLevel = SceneManager.GetActiveScene().buildIndex;
+    int startLevel;
     
 
     enum State { Alive, Dying, Transcending }
@@ -25,6 +25,7 @@ public class Rocket : MonoBehaviour
     {
         rigidBody = GetComponent<Rigidbody>();
         audioSource = GetComponent<AudioSource>();
+        startLevel = SceneManager.GetActiveScene().buildIndex;
     }
 
     // Update is called once per frame
@@ -43,6 +44,9 @@ public class Rocket : MonoBehaviour
         {
             case "Friendly":
                 break;
+            case "Bounce":
+                Bounce(collision);
+                break;
             case "Finish":
                 StartSuccessSequence();
                 break;
@@ -50,6 +54,20 @@ public class Rocket : MonoBehaviour
                 StartDeathSequence();
                 break;
         }
+    }
+
+    void Bounce(Collision collision)
+    {
+
+        Vector3 newDirection = Vector3.Reflect(transform.position, collision.contacts[0].normal);
+        print (newDirection);
+        transform.rotation = Quaternion.LookRotation(newDirection);
+
+        //rigidBody.velocity = transform.position * rigidBody.velocity.magnitude;
+
+
+        //transform.rotation = Quaternion.Inverse(transform.rotation);
+        //rigidBody.velocity =  new Vector3(-2*rigidBody.velocity.x,0, -2 * rigidBody.velocity.z);
     }
 
     private void StartDeathSequence()
@@ -77,9 +95,9 @@ public class Rocket : MonoBehaviour
 
     void LoadNextLevel()
     {
-        if (startLevel < SceneManager.sceneCountInBuildSettings)
+        if (startLevel < SceneManager.sceneCountInBuildSettings-1)
             startLevel++;
-        else if (startLevel == SceneManager.sceneCountInBuildSettings)
+        else if (startLevel == SceneManager.sceneCountInBuildSettings-1)
             startLevel = 0;
 
         SceneManager.LoadScene(startLevel);
